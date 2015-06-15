@@ -3,6 +3,7 @@ require 'bundler/setup'
 
 require 'turn'
 require 'minitest/unit'
+require 'mocha/setup'
 
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))

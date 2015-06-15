@@ -24,6 +24,5 @@ then need to sudo to a different identity for each command.}
   gem.add_development_dependency('minitest', ['>= 2.11.3', '< 2.12.0'])
   gem.add_development_dependency('rake')
   gem.add_development_dependency('turn')
-  # gem.add_development_dependency('unindent')
-  # gem.add_development_dependency('mocha')
+  gem.add_development_dependency('mocha')
 end
