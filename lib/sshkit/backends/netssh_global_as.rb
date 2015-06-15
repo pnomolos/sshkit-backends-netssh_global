@@ -1,3 +1,5 @@
+require 'sshkit/command_sudo_ssh_forward'
+
 module SSHKit
   module Backend
     class NetsshGlobalAs < Netssh
@@ -31,6 +33,14 @@ module SSHKit
         self.class.config.owner
       end
 
+      def pwd
+        @pwd.nil? ? nil : File.join(@pwd)
+      end
+
+      def ssh_commands
+        [:'ssh-add']
+      end
+
       def with_ssh
         host.ssh_options = NetsshGlobalAs.config.ssh_options.merge(host.ssh_options || {})
         conn = self.class.pool.checkout(
@@ -48,7 +58,7 @@ module SSHKit
 
       def command(*args)
         options = args.extract_options!
-        SSHKit::Command.new(*[*args, options.merge({in: @pwd.nil? ? nil : File.join(@pwd), env: @env, host: @host, user: user, group: @group})])
+        SSHKit::CommandSudoSshForward.new(*[*args, options.merge({in: pwd, env: @env, host: @host, user: user, group: @group, ssh_commands: ssh_commands})])
       end
     end
   end

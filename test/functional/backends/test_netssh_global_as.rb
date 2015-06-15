@@ -120,6 +120,17 @@ module SSHKit
 
         assert_equal File.open(file_name).read, file_contents
       end
+
+      def test_commands_that_need_ssh_have_ssh_agent_available
+        remote_ssh_output = ''
+        local_ssh_output = `ssh-add -l 2>&1`.strip
+        a_host.ssh_options = { forward_agent: true }
+        NetsshGlobalAs.new(a_host) do |host|
+          remote_ssh_output = capture 'ssh-add', '-l', '2>&1;', 'true'
+        end.run
+
+        assert_equal local_ssh_output, remote_ssh_output
+      end
     end
   end
 end
