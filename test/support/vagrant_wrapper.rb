@@ -1,4 +1,6 @@
 # Copy of VagrantWrapper from SSHKit
+require 'json'
+require 'sshkit'
 
 class VagrantWrapper
   class << self
