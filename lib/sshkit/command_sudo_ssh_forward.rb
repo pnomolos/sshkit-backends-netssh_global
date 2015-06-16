@@ -61,7 +61,7 @@ module SSHKit
     end
 
     def sudo_command?
-      @options[:user]
+      options[:user]
     end
 
   end

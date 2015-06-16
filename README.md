@@ -31,12 +31,16 @@ rake
 ```ruby
 require 'sshkit/backends/netssh_global_as'
 
-set :user, 'bob'   # (Capistrano default) the user we will login as
-set :owner, 'app1' # (New setting) the user we will globally sudo as
-set :ssh_commands, [:git, :bundle] # (New setting) the commands which require
-                                   # access to bob's ssh agent
+SSHKit::Backend::NetsshGlobalAs.configure do |config|
+  config.owner        = 'bob'  # Which user to sudo as for every command
+  config.ssh_commands = [:git] # Global setting for which commands require SSH forwarding
+end
 
-set :sshkit_backend, Sshkit::Backends::NetsshGlobalAs
+# Per host configuration
+Host.new("example.com").tap do |h|
+  h.properties.owner        = 'fred'
+  h.properties.ssh_commands = [:git, :bundle]
+end
 ```
 
 ### Credits

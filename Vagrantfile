@@ -11,7 +11,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.define vm["name"] do |web|
       web.vm.network "forwarded_port", guest: 22, host: vm["port"]
       web.vm.provision "shell", inline: "apt-get update && apt-get install --yes acl"
-      web.vm.provision "shell", inline: "useradd --create-home owner"
+
+      vm["users"].each do |user|
+        web.vm.provision "shell", inline: "useradd --create-home #{user}"
+      end
     end
   end
 end

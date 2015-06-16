@@ -26,6 +26,10 @@ class VagrantWrapper
       end
     end
 
+    def reset!
+      @vm_hosts = nil
+    end
+
     def running?
       @running ||= begin
         status = `#{vagrant_binary} status`

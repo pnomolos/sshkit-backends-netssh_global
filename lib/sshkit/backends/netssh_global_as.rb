@@ -5,6 +5,11 @@ module SSHKit
     class NetsshGlobalAs < Netssh
       class Configuration < Netssh::Configuration
         attr_accessor :owner
+        attr_writer :ssh_commands
+
+        def ssh_commands
+          @ssh_commands || [:ssh, :git, :'ssh-add', :bundle]
+        end
       end
 
       class << self
@@ -30,7 +35,7 @@ module SSHKit
       end
 
       def owner
-        self.class.config.owner
+        host.properties.owner || self.class.config.owner
       end
 
       def pwd
@@ -38,7 +43,7 @@ module SSHKit
       end
 
       def ssh_commands
-        [:'ssh-add']
+        host.properties.ssh_commands || self.class.config.ssh_commands
       end
 
       def with_ssh

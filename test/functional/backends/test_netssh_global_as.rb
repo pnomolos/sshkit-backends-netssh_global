@@ -9,8 +9,21 @@ module SSHKit
       def setup
         super
         NetsshGlobalAs.configure do |config|
-          config.owner = 'owner'
+          config.owner = a_user
         end
+        VagrantWrapper.reset!
+      end
+
+      def a_user
+        a_box.fetch('users').fetch(0)
+      end
+
+      def another_user
+        a_box.fetch('users').fetch(1)
+      end
+
+      def a_box
+        VagrantWrapper.boxes_list.first
       end
 
       def a_host
@@ -21,7 +34,7 @@ module SSHKit
         File.open('/dev/null', 'w') do |dnull|
           SSHKit.capture_output(dnull) do
             captured_command_result = nil
-            NetsshGlobalAs.new(a_host) do |host|
+            NetsshGlobalAs.new(a_host) do
               captured_command_result = capture(:uname)
             end.run
 
@@ -42,23 +55,44 @@ module SSHKit
         assert_equal({ forward_agent: false, paranoid: true }, host_ssh_options)
       end
 
+      def test_configure_owner_via_global_config
+        NetsshGlobalAs.configure do |config|
+          config.owner = a_user
+        end
+
+        output = ''
+        NetsshGlobalAs.new(a_host) do
+          output = capture :whoami
+        end.run
+        assert_equal a_user, output
+      end
+
+      def test_configure_owner_via_host
+        a_host.properties.owner = another_user
+        output = ''
+        NetsshGlobalAs.new(a_host) do
+          output = capture :whoami
+        end.run
+        assert_equal another_user, output
+      end
+
       def test_execute_raises_on_non_zero_exit_status_and_captures_stdout_and_stderr
         err = assert_raises SSHKit::Command::Failed do
-          NetsshGlobalAs.new(a_host) do |host|
-            execute :echo, "\"User $(whoami) on stderr\" 1>&2; false"
+          NetsshGlobalAs.new(a_host) do
+            execute :echo, "\"Test capturing stderr\" 1>&2; false"
           end.run
         end
-        assert_equal "echo exit status: 1\necho stdout: Nothing written\necho stderr: User owner on stderr\n", err.message
+        assert_equal "echo exit status: 1\necho stdout: Nothing written\necho stderr: Test capturing stderr\n", err.message
       end
 
       def test_test_does_not_raise_on_non_zero_exit_status
-        NetsshGlobalAs.new(a_host) do |host|
+        NetsshGlobalAs.new(a_host) do
           test :false
         end.run
       end
 
       def test_test_executes_as_owner_when_command_contains_no_spaces
-        result = NetsshGlobalAs.new(a_host) do |host|
+        result = NetsshGlobalAs.new(a_host) do
           test 'test', '"$USER" = "owner"'
         end.run
 
@@ -66,7 +100,7 @@ module SSHKit
       end
 
       def test_test_executes_as_ssh_user_when_command_contains_spaces
-        result = NetsshGlobalAs.new(a_host) do |host|
+        result = NetsshGlobalAs.new(a_host) do
           test 'test "$USER" = "vagrant"'
         end.run
 
@@ -88,20 +122,20 @@ module SSHKit
         end.run
 
         assert_equal 'example_file', file_contents
-        assert_equal 'owner', file_owner
+        assert_equal a_user, file_owner
       end
 
       def test_upload_string_io
         file_contents = ""
         file_owner = nil
-        NetsshGlobalAs.new(a_host) do |host|
+        NetsshGlobalAs.new(a_host) do
           file_name = File.join("/tmp", SecureRandom.uuid)
           upload!(StringIO.new('example_io'), file_name)
           file_contents = download!(file_name)
           file_owner = capture(:stat, '-c', '%U',  file_name)
         end.run
         assert_equal "example_io", file_contents
-        assert_equal 'owner', file_owner
+        assert_equal a_user, file_owner
       end
 
       def test_upload_large_file
@@ -121,7 +155,7 @@ module SSHKit
         assert_equal File.open(file_name).read, file_contents
       end
 
-      def test_commands_that_need_ssh_have_ssh_agent_available
+      def test_ssh_forwarded_when_command_is_ssh_command
         remote_ssh_output = ''
         local_ssh_output = `ssh-add -l 2>&1`.strip
         a_host.ssh_options = { forward_agent: true }
@@ -130,6 +164,36 @@ module SSHKit
         end.run
 
         assert_equal local_ssh_output, remote_ssh_output
+      end
+
+      def test_ssh_not_forwarded_when_command_is_not_an_ssh_command
+        echo_output = ''
+
+        a_host.ssh_options = { forward_agent: true }
+        a_host.properties.ssh_commands = [:not_echo]
+        NetsshGlobalAs.new(a_host) do |host|
+          echo_output = capture :echo, '$SSH_AUTH_SOCK'
+        end.run
+
+        assert_match '', echo_output
+      end
+
+      def test_can_configure_ssh_commands
+        echo_output = ''
+
+        a_host.ssh_options = { forward_agent: true }
+        a_host.properties.ssh_commands = [:echo]
+        NetsshGlobalAs.new(a_host) do |host|
+          echo_output = capture :echo, '$SSH_AUTH_SOCK'
+        end.run
+
+        assert_match /\/tmp\//, echo_output
+      end
+
+      def test_default_ssh_commands
+        ssh_commands = NetsshGlobalAs.config.ssh_commands
+
+        assert_equal [:ssh, :git, :'ssh-add', :bundle], ssh_commands
       end
     end
   end

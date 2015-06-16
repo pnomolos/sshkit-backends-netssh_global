@@ -4,6 +4,10 @@
     "port": 3001,
     "user": "vagrant",
     "password": "vagrant",
-    "hostname": "localhost"
+    "hostname": "localhost",
+    "users": [
+      "owner",
+      "owner2"
+    ]
   }
 ]
