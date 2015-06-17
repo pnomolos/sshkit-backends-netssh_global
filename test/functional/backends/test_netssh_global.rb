@@ -1,14 +1,14 @@
 require 'helper'
 require 'securerandom'
 
-require 'sshkit/backends/netssh_global_as'
+require 'sshkit/backends/netssh_global'
 
 module SSHKit
   module Backend
-    class TestNetsshGlobalAsFunctional < FunctionalTest
+    class TestNetsshGlobalFunctional < FunctionalTest
       def setup
         super
-        NetsshGlobalAs.configure do |config|
+        NetsshGlobal.configure do |config|
           config.owner = a_user
         end
         VagrantWrapper.reset!
@@ -34,7 +34,7 @@ module SSHKit
         File.open('/dev/null', 'w') do |dnull|
           SSHKit.capture_output(dnull) do
             captured_command_result = nil
-            NetsshGlobalAs.new(a_host) do
+            NetsshGlobal.new(a_host) do
               captured_command_result = capture(:uname)
             end.run
 
@@ -47,8 +47,8 @@ module SSHKit
       def test_ssh_option_merge
         a_host.ssh_options = { paranoid: true }
         host_ssh_options = {}
-        SSHKit::Backend::NetsshGlobalAs.config.ssh_options = { forward_agent: false }
-        NetsshGlobalAs.new(a_host) do |host|
+        SSHKit::Backend::NetsshGlobal.config.ssh_options = { forward_agent: false }
+        NetsshGlobal.new(a_host) do |host|
           capture(:uname)
           host_ssh_options = host.ssh_options
         end.run
@@ -56,12 +56,12 @@ module SSHKit
       end
 
       def test_configure_owner_via_global_config
-        NetsshGlobalAs.configure do |config|
+        NetsshGlobal.configure do |config|
           config.owner = a_user
         end
 
         output = ''
-        NetsshGlobalAs.new(a_host) do
+        NetsshGlobal.new(a_host) do
           output = capture :whoami
         end.run
         assert_equal a_user, output
@@ -70,7 +70,7 @@ module SSHKit
       def test_configure_owner_via_host
         a_host.properties.owner = another_user
         output = ''
-        NetsshGlobalAs.new(a_host) do
+        NetsshGlobal.new(a_host) do
           output = capture :whoami
         end.run
         assert_equal another_user, output
@@ -78,7 +78,7 @@ module SSHKit
 
       def test_execute_raises_on_non_zero_exit_status_and_captures_stdout_and_stderr
         err = assert_raises SSHKit::Command::Failed do
-          NetsshGlobalAs.new(a_host) do
+          NetsshGlobal.new(a_host) do
             execute :echo, "\"Test capturing stderr\" 1>&2; false"
           end.run
         end
@@ -86,13 +86,13 @@ module SSHKit
       end
 
       def test_test_does_not_raise_on_non_zero_exit_status
-        NetsshGlobalAs.new(a_host) do
+        NetsshGlobal.new(a_host) do
           test :false
         end.run
       end
 
       def test_test_executes_as_owner_when_command_contains_no_spaces
-        result = NetsshGlobalAs.new(a_host) do
+        result = NetsshGlobal.new(a_host) do
           test 'test', '"$USER" = "owner"'
         end.run
 
@@ -100,7 +100,7 @@ module SSHKit
       end
 
       def test_test_executes_as_ssh_user_when_command_contains_spaces
-        result = NetsshGlobalAs.new(a_host) do
+        result = NetsshGlobal.new(a_host) do
           test 'test "$USER" = "vagrant"'
         end.run
 
@@ -115,7 +115,7 @@ module SSHKit
           f.write 'example_file'
         end
 
-        NetsshGlobalAs.new(a_host) do
+        NetsshGlobal.new(a_host) do
           upload!(file_name, file_name)
           file_contents = capture(:cat, file_name)
           file_owner = capture(:stat, '-c', '%U',  file_name)
@@ -128,7 +128,7 @@ module SSHKit
       def test_upload_string_io
         file_contents = ""
         file_owner = nil
-        NetsshGlobalAs.new(a_host) do
+        NetsshGlobal.new(a_host) do
           file_name = File.join("/tmp", SecureRandom.uuid)
           upload!(StringIO.new('example_io'), file_name)
           file_contents = download!(file_name)
@@ -147,7 +147,7 @@ module SSHKit
         end
 
         file_contents = ""
-        NetsshGlobalAs.new(a_host) do
+        NetsshGlobal.new(a_host) do
           upload!(file_name, file_name)
           file_contents = download!(file_name)
         end.run
@@ -159,7 +159,7 @@ module SSHKit
         remote_ssh_output = ''
         local_ssh_output = `ssh-add -l 2>&1`.strip
         a_host.ssh_options = { forward_agent: true }
-        NetsshGlobalAs.new(a_host) do |host|
+        NetsshGlobal.new(a_host) do |host|
           remote_ssh_output = capture 'ssh-add', '-l', '2>&1;', 'true'
         end.run
 
@@ -171,7 +171,7 @@ module SSHKit
 
         a_host.ssh_options = { forward_agent: true }
         a_host.properties.ssh_commands = [:not_echo]
-        NetsshGlobalAs.new(a_host) do |host|
+        NetsshGlobal.new(a_host) do |host|
           echo_output = capture :echo, '$SSH_AUTH_SOCK'
         end.run
 
@@ -183,7 +183,7 @@ module SSHKit
 
         a_host.ssh_options = { forward_agent: true }
         a_host.properties.ssh_commands = [:echo]
-        NetsshGlobalAs.new(a_host) do |host|
+        NetsshGlobal.new(a_host) do |host|
           echo_output = capture :echo, '$SSH_AUTH_SOCK'
         end.run
 
@@ -191,7 +191,7 @@ module SSHKit
       end
 
       def test_default_ssh_commands
-        ssh_commands = NetsshGlobalAs.config.ssh_commands
+        ssh_commands = NetsshGlobal.config.ssh_commands
 
         assert_equal [:ssh, :git, :'ssh-add', :bundle], ssh_commands
       end

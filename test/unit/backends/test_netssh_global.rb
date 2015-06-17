@@ -1,11 +1,11 @@
 require 'helper'
-require 'sshkit/backends/netssh_global_as'
+require 'sshkit/backends/netssh_global'
 
 module SSHKit
   module Backend
-    class TestNetsshGlobalAsUnit < UnitTest
+    class TestNetsshGlobalUnit < UnitTest
       def backend
-        @backend ||= NetsshGlobalAs
+        @backend ||= NetsshGlobal
       end
 
       def test_net_ssh_configuration_options

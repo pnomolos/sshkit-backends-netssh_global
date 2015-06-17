@@ -9,15 +9,15 @@ Gem::Specification.new do |gem|
   gem.description   = %q{A backend to be used in conjunction with Capistrano 3
 and SSHKit to allow deployment on setups where users login as one identity and
 then need to sudo to a different identity for each command.}
-  gem.homepage      = "http://github.com/fundingcircle/sshkit-backends-netssh_global_as"
+  gem.homepage      = "http://github.com/fundingcircle/sshkit-backends-netssh_global"
   # gem.license       = "GPL3"
 
   gem.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   gem.files         = `git ls-files`.split("\n")
   gem.test_files    = `git ls-files -- test/*`.split("\n")
-  gem.name          = "sshkit-backends-netssh_global_as"
+  gem.name          = "sshkit-backends-netssh_global"
   gem.require_paths = ["lib"]
-  gem.version       = SSHKit::Backends::NetsshGlobalAs::VERSION
+  gem.version       = SSHKit::Backends::NetsshGlobal::VERSION
 
   gem.add_runtime_dependency('sshkit', '1.7.1')
 

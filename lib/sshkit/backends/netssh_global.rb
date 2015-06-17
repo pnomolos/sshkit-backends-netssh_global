@@ -2,7 +2,7 @@ require 'sshkit/command_sudo_ssh_forward'
 
 module SSHKit
   module Backend
-    class NetsshGlobalAs < Netssh
+    class NetsshGlobal < Netssh
       class Configuration < Netssh::Configuration
         attr_accessor :owner
         attr_writer :ssh_commands
@@ -47,7 +47,7 @@ module SSHKit
       end
 
       def with_ssh
-        host.ssh_options = NetsshGlobalAs.config.ssh_options.merge(host.ssh_options || {})
+        host.ssh_options = NetsshGlobal.config.ssh_options.merge(host.ssh_options || {})
         conn = self.class.pool.checkout(
           String(host.hostname),
           host.username,
