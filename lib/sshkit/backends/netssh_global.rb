@@ -4,7 +4,7 @@ module SSHKit
   module Backend
     class NetsshGlobal < Netssh
       class Configuration < Netssh::Configuration
-        attr_accessor :owner
+        attr_accessor :owner, :directory
         attr_writer :ssh_commands
 
         def ssh_commands
@@ -24,26 +24,22 @@ module SSHKit
         super
         as :root do
           # Required as uploaded file is owned by SSH user, not owner
-          execute :chown, owner, remote
+          execute :chown, property(:owner), remote
         end
       end
 
       private
 
       def user
-        @user || owner
-      end
-
-      def owner
-        host.properties.owner || self.class.config.owner
+        @user || property(:owner)
       end
 
       def pwd
-        @pwd.nil? ? nil : File.join(@pwd)
+        @pwd.nil? ? property(:directory) : File.join(@pwd)
       end
 
-      def ssh_commands
-        host.properties.ssh_commands || self.class.config.ssh_commands
+      def property(name)
+        host.properties.public_send(name) || self.class.config.public_send(name)
       end
 
       def with_ssh
@@ -63,7 +59,15 @@ module SSHKit
 
       def command(*args)
         options = args.extract_options!
-        SSHKit::CommandSudoSshForward.new(*[*args, options.merge({in: pwd, env: @env, host: @host, user: user, group: @group, ssh_commands: ssh_commands})])
+        options.merge!(
+          in: pwd,
+          env: @env,
+          host: @host,
+          user: user,
+          group: @group,
+          ssh_commands: property(:ssh_commands)
+        )
+        SSHKit::CommandSudoSshForward.new(*[*args, options])
       end
     end
   end

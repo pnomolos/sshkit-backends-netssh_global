@@ -10,6 +10,7 @@ module SSHKit
         super
         NetsshGlobal.configure do |config|
           config.owner = a_user
+          config.directory = nil
         end
         VagrantWrapper.reset!
       end
@@ -69,11 +70,49 @@ module SSHKit
 
       def test_configure_owner_via_host
         a_host.properties.owner = another_user
+
         output = ''
         NetsshGlobal.new(a_host) do
           output = capture :whoami
         end.run
         assert_equal another_user, output
+      end
+
+      def test_configure_directory_to_nil_has_no_effect
+        NetsshGlobal.configure do |config|
+          config.directory = nil
+        end
+
+        output = ''
+        NetsshGlobal.new(a_host) do
+          output = capture :pwd
+        end.run
+        assert_equal "/home/#{a_host.user}", output
+      end
+
+      def test_configure_directory_via_global_config
+        NetsshGlobal.configure do |config|
+          config.directory = '/tmp'
+        end
+
+        output = ''
+        NetsshGlobal.new(a_host) do
+          output = capture :pwd
+        end.run
+        assert_equal '/tmp', output
+      end
+
+      def test_configure_directory_via_host
+        NetsshGlobal.configure do |config|
+          config.directory = '/usr'
+        end
+
+        a_host.properties.directory = '/tmp'
+        output = ''
+        NetsshGlobal.new(a_host) do
+          output = capture :pwd
+        end.run
+        assert_equal '/tmp', output
       end
 
       def test_execute_raises_on_non_zero_exit_status_and_captures_stdout_and_stderr
