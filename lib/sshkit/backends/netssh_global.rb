@@ -21,6 +21,8 @@ module SSHKit
       @pool = SSHKit::Backend::ConnectionPool.new
 
       def upload!(local, remote, options = {})
+        execute :setfacl, "-m u:#{ssh_user}:rwx #{File.dirname(remote)}; true"
+        execute :setfacl, "-m u:#{ssh_user}:rw #{remote}; true"
         super
         as :root do
           # Required as uploaded file is owned by SSH user, not owner
@@ -32,6 +34,10 @@ module SSHKit
 
       def user
         @user || property(:owner)
+      end
+
+      def ssh_user
+        host.user || configure_host.ssh_options.fetch(:user)
       end
 
       def pwd

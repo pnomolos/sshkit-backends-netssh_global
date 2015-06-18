@@ -164,6 +164,53 @@ module SSHKit
         assert_equal a_user, file_owner
       end
 
+      def test_upload_file_to_folder_owned_by_user
+        dir = File.join('/tmp', SecureRandom.uuid)
+        NetsshGlobal.new(a_host) do
+          execute(:mkdir, dir)
+        end.run
+
+        file_name = SecureRandom.uuid
+        local_file = File.join('/tmp', file_name)
+        File.open local_file, 'w+' do |f|
+          f.write 'example_file'
+        end
+
+        file_contents = ""
+        file_owner = nil
+        remote_file = File.join(dir, file_name)
+        NetsshGlobal.new(a_host) do
+          upload!(local_file, remote_file)
+          file_contents = capture(:cat, remote_file)
+          file_owner = capture(:stat, '-c', '%U',  remote_file)
+        end.run
+
+        assert_equal 'example_file', file_contents
+        assert_equal a_user, file_owner
+      end
+
+      def test_upload_file_overtop_of_existing_file
+        file_name = File.join('/tmp', SecureRandom.uuid)
+        File.open file_name, 'w+' do |f|
+          f.write 'example_file'
+        end
+
+        NetsshGlobal.new(a_host) do
+          upload!(file_name, file_name)
+        end.run
+
+        file_contents = ""
+        file_owner = nil
+        NetsshGlobal.new(a_host) do
+          upload!(file_name, file_name)
+          file_contents = capture(:cat, file_name)
+          file_owner = capture(:stat, '-c', '%U',  file_name)
+        end.run
+
+        assert_equal 'example_file', file_contents
+        assert_equal a_user, file_owner
+      end
+
       def test_upload_string_io
         file_contents = ""
         file_owner = nil
