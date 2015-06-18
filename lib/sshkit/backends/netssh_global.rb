@@ -43,7 +43,7 @@ module SSHKit
       end
 
       def with_ssh
-        host.ssh_options = NetsshGlobal.config.ssh_options.merge(host.ssh_options || {})
+        configure_host
         conn = self.class.pool.checkout(
           String(host.hostname),
           host.username,
@@ -57,12 +57,18 @@ module SSHKit
         end
       end
 
+      def configure_host
+        host.tap do |h|
+          h.ssh_options = self.class.config.ssh_options.merge(host.ssh_options || {})
+        end
+      end
+
       def command(*args)
         options = args.extract_options!
         options.merge!(
           in: pwd,
           env: @env,
-          host: @host,
+          host: configure_host,
           user: user,
           group: @group,
           ssh_commands: property(:ssh_commands)
