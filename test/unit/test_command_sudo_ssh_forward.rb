@@ -86,6 +86,11 @@ module SSHKit
       assert_equal "sudo -u anotheruser -- sh -c '/usr/bin/env whoami'", c.to_command
     end
 
+    def test_working_as_a_given_user_with_a_custom_shell
+      c = CommandSudoSshForward.new(:whoami, user: :anotheruser, shell: 'bash -l')
+      assert_equal "sudo -u anotheruser -- bash -l -c '/usr/bin/env whoami'", c.to_command
+    end
+
     def test_working_as_a_given_group
       c = CommandSudoSshForward.new(:whoami, group: :devvers)
       assert_equal "sg devvers -c \\\"/usr/bin/env whoami\\\"", c.to_command

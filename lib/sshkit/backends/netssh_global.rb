@@ -4,7 +4,7 @@ module SSHKit
   module Backend
     class NetsshGlobal < Netssh
       class Configuration < Netssh::Configuration
-        attr_accessor :owner, :directory
+        attr_accessor :owner, :directory, :shell
         attr_writer :ssh_commands
 
         def ssh_commands
@@ -77,7 +77,8 @@ module SSHKit
           host: configure_host,
           user: user,
           group: @group,
-          ssh_commands: property(:ssh_commands)
+          ssh_commands: property(:ssh_commands),
+          shell: property(:shell)
         )
         SSHKit::CommandSudoSshForward.new(*[*args, options])
       end

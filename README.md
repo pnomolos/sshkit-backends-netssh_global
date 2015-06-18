@@ -43,6 +43,7 @@ SSHKit::Backend::NetsshGlobal.configure do |config|
                                     # certain directory. This can be used to overcome permission problems when
                                     # sudo'ing
   config.ssh_commands = [:git]      # Setting for which commands require SSH forwarding
+  config.shell        = 'bash -l'   # Setting that allows the shell that sudo runs to be overriden
 end
 
 # Per host configuration

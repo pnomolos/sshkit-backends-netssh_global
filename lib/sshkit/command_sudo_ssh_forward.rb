@@ -29,7 +29,13 @@ module SSHKit
       "setfacl -m #{options[:user]}:x $(dirname $SSH_AUTH_SOCK) && setfacl -m #{options[:user]}:rw $SSH_AUTH_SOCK && %s" % yield
     end
 
-     def with(&block)
+    def user(&block)
+      return yield unless options[:user]
+      shell = options[:shell] || 'sh'
+      "sudo -u #{options[:user]} #{environment_string + " " unless environment_string.empty?}-- #{shell} -c '%s'" % %Q{#{yield}}
+    end
+
+    def with(&block)
       return yield if environment_hash.empty? || sudo_command?
       "( #{environment_string} %s )" % yield
     end

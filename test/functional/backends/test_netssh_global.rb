@@ -11,6 +11,7 @@ module SSHKit
         NetsshGlobal.configure do |config|
           config.owner = a_user
           config.directory = nil
+          config.shell = nil
         end
         VagrantWrapper.reset!
       end
@@ -76,6 +77,19 @@ module SSHKit
           output = capture :whoami
         end.run
         assert_equal another_user, output
+      end
+
+      def test_configure_shell_via_global_config
+        NetsshGlobal.configure do |config|
+          config.shell = "csh"
+        end
+
+        running_shell = ''
+        NetsshGlobal.new(a_host) do
+          running_shell = capture :echo, '$shell'
+        end.run
+
+        assert_equal '/bin/csh', running_shell
       end
 
       def test_configure_directory_to_nil_has_no_effect
