@@ -32,7 +32,7 @@ module SSHKit
     def user(&block)
       return yield unless options[:user]
       shell = options[:shell] || 'sh'
-      "sudo su -c \"#{environment_string + " " unless environment_string.empty?}-- #{shell} -c '%s'\" - #{options[:user]}" % %Q{#{yield}}
+      "sudo su -c \"#{environment_string + " " unless environment_string.empty?} #{shell} -c '%s'\" - #{options[:user]}" % %Q{#{yield}}
     end
 
     def with(&block)
