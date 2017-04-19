@@ -54,7 +54,7 @@ module SSHKit
           Net::SSH.method(:start),
           String(host.hostname),
           host.username,
-          host.netssh_options,
+          host.netssh_options
         ) do |connection|
           yield connection
         end
